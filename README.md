@@ -1,4 +1,4 @@
-## Intel Optimized GATK-3-4 Germline SNPs and Indels Variant Calling Workflow. 
+## Intel Optimized GATK4 Germline SNPs and Indels Variant Calling Workflow. 
 
 ### WORKFLOWS AND JSONS
 This repository contains a few different files - each tuned for certain requirements. 
