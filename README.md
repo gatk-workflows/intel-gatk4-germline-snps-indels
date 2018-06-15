@@ -36,7 +36,8 @@ require\_fpga: "yes"
 b. In the JSON file, change the "PairedEndSingleSampleWorkflow.gatk\_gkl\_pairhmm\_implementation" to “EXPERIMENTAL\_FPGA\_LOGLESS\_CACHING” from “AVX\_LOGLESS\_CACHING”.
 
 ### DATASETS
-Contact Intel/Broad for access to the WGS/WES data needed for this workflow.
+The datasets for the WGS workflow can be obtained from: https://console.cloud.google.com/storage/browser/broad-public-datasets/NA12878/unmapped/.  
+Contact Broad/Intel for access to the WES data needed for this workflow.
 
 ### TOOLS
 For on-prem, the workflow uses non-dockerized tools. To keep up with the exact 
