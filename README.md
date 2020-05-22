@@ -3,13 +3,16 @@
 ### WORKFLOWS AND JSONS
 This repository contains a few different files - each tuned for certain requirements. 
 
-├── Throughput\_PairedSingleSampleWf\_optimized.inputs.json *&rarr;* WGS Throughput JSON file \
-├── Latency\_PairedSingleSampleWf\_optimized.inputs.json *&rarr;* WGS Latency JSON file \
+
 ├── Exome\_2T\_PairedSingleSampleWf\_optimized.inputs.json *&rarr;* WES Throughput JSON file \
 ├── Exome\_56T\_PairedSingleSampleWf\_optimized.inputs.json *&rarr;* WES Latency JSON file \
-├── PairedSingleSampleWf\_noqc\_nocram\_optimized.wdl *&rarr;* WGS WDL optimized for on-prem \
 ├── Exome\_PairedSingleSampleWf\_noqc\_nocram\_optimized.wdl *&rarr;* WES WDL optimized for on-prem
-
+├── Latency\_PairedSingleSampleWf\_HT\_384GB.json *&rarr;*  WGS Latency JSON file with HT on \
+├── Latency\_PairedSingleSampleWf\_NO\_HT\_384GB.json *&rarr;*  WGS Latency JSON file with HT off \
+├── Throughput\_PairedSingleSampleWf\_HT\_384GB.json *&rarr;*  WGS Througphput JSON file with HT off \
+├── Throughput\_PairedSingleSampleWf\_NO\_HT\_384GB.json *&rarr;*  WGS Throughput JSON file with HT off \
+├── PairedSingleSampleWf\_noqc\_nocram\_optimized.wdl *&rarr;*  WGS WDL optimized for on-prem \
+├── PairedSingleSampleWf\_noqc\_nocram\_withcleanup\_optimized.wdl *&rarr;*  WGS WDL optimized for on-prem benchmarking \
 Modify the following lines in the WDL files to reflect the paths where datasets reside in your cluster: 
  - [PairedSingleSampleWf\_noqc\_nocram\_optimized.wdl](https://github.com/gatk-workflows/intel-gatk4-germline-snps-indels/blob/master/PairedSingleSampleWf_noqc_nocram_optimized.wdl#L1267)
  - [PairedSingleSampleWf\_noqc\_nocram\_withcleanup\_optimized.wdl](https://github.com/gatk-workflows/intel-gatk4-germline-snps-indels/blob/master/PairedSingleSampleWf_noqc_nocram_withcleanup_optimized.wdl#L1313)
@@ -17,6 +20,14 @@ Modify the following lines in the WDL files to reflect the paths where datasets 
 
 In the JSON files, modify the paths to the datasets and tools where they reside in your cluster. \
 Example: modify [Latency\_PairedSingleSampleWf\_optimized.inputs.json](https://github.com/gatk-workflows/intel-gatk4-germline-snps-indels/blob/master/Thoughput_PairedSingleSampleWf_optimized.inputs.json#L69) for tools directory.
+
+For improved throuput perfomance of WGS processing it is recomned uncomment the "backend" configuraoitn and setup 4 Cromwell Queues. 
+4 Queue aproach with cpu and memory level allocation support.
+    Local: Run the first 3 basic tasks on local and seralize the workflows.
+    BWA: Run BWA low priority on all nodes (let BWA run on 1/2 of the nodes untill their work is done)
+    All: 1/2 nodes for everything else with high priority
+    Haplo: 1/2 All node at mid priorty for Haplotype
+
 
 ### DATASETS
 The datasets used for the WGS workflow turning can be obtained from: https://console.cloud.google.com/storage/browser/broad-public-datasets/NA12878/unmapped/. 
