@@ -49,6 +49,7 @@ task CollectQualityYieldMetrics {
   runtime {
     memory: memory
     cpu: cpu
+#    backend: "Local"
   }
   output {
     File metrics = "${metrics_filename}"
@@ -74,6 +75,7 @@ task CheckFinalVcfExtension {
   runtime {
     memory: memory
     cpu: cpu
+#    backend: "Local"
   }
   output {
     String common_suffix=read_string(stdout())
@@ -89,13 +91,14 @@ task GetBwaVersion {
   command {
     # not setting set -o pipefail here because /bwa has a rc=1 and we dont want to allow rc=1 to succeed because
     # the sed may also fail with that error and that is something we actually want to fail on.
-    ${tool_path}/bwa 2>&1 | \
+    ${tool_path}/bwa/bwa 2>&1 | \
     grep -e '^Version' | \
     sed 's/Version: //'
   }
   runtime {
     memory: memory
     cpu: cpu
+#    backend: "Local"
   }
   output {
     String version = read_string(stdout())
@@ -170,7 +173,7 @@ task SamToFastqAndBwaMemAndMba {
         PROGRAM_GROUP_NAME="bwamem" \
         UNMAPPED_READ_STRATEGY=COPY_TO_TAG \
         ALIGNER_PROPER_PAIR_FLAGS=true \
-        UNMAP_CONTAMINANT_READS=true \
+        UNMAP_CONTAMINANT_READS=true \ 
         ADD_PG_TAG_TO_READS=false
 
       grep -m1 "read .* ALT contigs" ${output_bam_basename}.bwa.stderr.log | \
@@ -184,6 +187,7 @@ task SamToFastqAndBwaMemAndMba {
   runtime {
     memory: memory
     cpu: cpu
+#    backend: "SLURM-BWA"
   }
   output {
     File output_bam = "${output_bam_basename}.bam"
@@ -209,7 +213,7 @@ task SortSam {
       SORT_ORDER="coordinate" \
       CREATE_INDEX=true \
       CREATE_MD5_FILE=true \
-      MAX_RECORDS_IN_RAM=300000 && \
+      MAX_RECORDS_IN_RAM=2700000 && \
       rm -rf ../inputs && \
       rm -rf ../../call-MarkDuplicates
 
@@ -240,8 +244,8 @@ task SamtoolsSort {
   command <<<
     set -o pipefail
     set -e
-    ${tool_path}/samtools sort -T $TMPDIR/${output_bam_basename}.bam.tmp -m ${mem_limit} --threads ${samtools_threads} -l ${compression_level} ${input_bam} -o ${output_bam_basename}.bam && \
-    ${tool_path}/samtools index ${output_bam_basename}.bam ${output_bam_basename}.bai && \
+    ${tool_path}/samtools-1.9/samtools sort -T $TMPDIR/${output_bam_basename}.bam.tmp -m ${mem_limit} --threads ${samtools_threads} -l ${compression_level} ${input_bam} -o ${output_bam_basename}.bam && \
+    ${tool_path}/samtools-1.9/samtools index ${output_bam_basename}.bam ${output_bam_basename}.bai && \
     rm -rf ../inputs && \
     rm -rf ../../call-MarkDuplicates
   >>>
@@ -581,8 +585,8 @@ task BaseRecalibrator {
   String tool_path
   
   command <<<
-    export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-    ${tool_path}/gatk4.0.0.0/gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
+    export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+    ${tool_path}/gatk-4.1.4.0/gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
       -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
       -Xloggc:gc_log.log -Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
       BaseRecalibrator \
@@ -621,8 +625,8 @@ task ApplyBQSR {
   String tool_path
   
   command <<<
-    export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-    ${tool_path}/gatk4.0.0.0/gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
+    export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+    ${tool_path}/gatk-4.1.4.0/gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
       -XX:+PrintGCDetails -Xloggc:gc_log.log \
       -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
       ApplyBQSR \
@@ -658,8 +662,8 @@ task GatherBqsrReports {
   String tool_path
   
   command <<<
-    export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-    ${tool_path}/gatk4.0.0.0/gatk --java-options "-Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
+    export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+    ${tool_path}/gatk-4.1.4.0/gatk --java-options "-Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
       GatherBQSRReports \
       -I ${sep=' -I ' input_bqsr_reports} \
       -O ${output_report_filename} && \
@@ -996,8 +1000,8 @@ task HaplotypeCaller {
   # We use interval_padding 500 below to make sure that the HaplotypeCaller has context on both sides around
   # the interval because the assembly uses them.
   command <<<
-      export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-      ${tool_path}/gatk4.0.0.0/gatk --java-options -Xmx${haplotypecaller_java_heap_memory_initial} \
+      export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+      ${tool_path}/gatk-4.1.4.0/gatk --java-options -Xmx${haplotypecaller_java_heap_memory_initial} \
       HaplotypeCaller \
       -R ${ref_fasta} \
       -I ${input_bam} \
@@ -1015,7 +1019,7 @@ task HaplotypeCaller {
   runtime {
     memory: memory
     cpu: cpu
-#    require_fpga: "yes"
+#    backend: "SLURM-HAPLO"
   }
   output {
     File output_gvcf = "${gvcf_basename}.vcf.gz"
@@ -1037,8 +1041,8 @@ task MergeVCFs {
   # Using MergeVcfs instead of GatherVcfs so we can create indices
   # See https://github.com/broadinstitute/picard/issues/789 for relevant GatherVcfs ticket
   command <<<
-      export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-      ${tool_path}/gatk4.0.0.0/gatk --java-options -Xmx${java_heap_memory_initial} \
+      export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+      ${tool_path}/gatk-4.1.4.0/gatk --java-options -Xmx${java_heap_memory_initial} \
       MergeVcfs \
       --INPUT=${sep=' --INPUT=' input_vcfs} \
       --OUTPUT=${output_vcf_name} && \
@@ -1075,8 +1079,8 @@ task ValidateGVCF {
   String tool_path
   
   command <<<
-    export GATK_LOCAL_JAR=${tool_path}/gatk4.0.0.0/gatk.jar && \
-    ${tool_path}/gatk4.0.0.0/gatk --java-options "-Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
+    export GATK_LOCAL_JAR=${tool_path}/gatk-4.1.4.0/gatk-package-4.1.4.0-local.jar && \
+    ${tool_path}/gatk-4.1.4.0/gatk --java-options "-Dsamjdk.compression_level=${compression_level} -Xmx${java_heap_memory_initial}" \
       ValidateVariants \
       -V ${input_vcf} \
       -R ${ref_fasta} \
@@ -1145,7 +1149,7 @@ task ConvertToCram {
     set -e
     set -o pipefail
 
-    ${tool_path}/samtools view -C -T ${ref_fasta} ${input_bam} | \
+    ${tool_path}/samtools-1.9/samtools view -C -T ${ref_fasta} ${input_bam} | \
     tee ${output_basename}.cram | \
     md5sum | awk '{print $1}' > ${output_basename}.cram.md5
 
@@ -1154,7 +1158,7 @@ task ConvertToCram {
     export REF_PATH=:
     export REF_CACHE=./ref/cache/%2s/%2s/%s
 
-    ${tool_path}/samtools index ${output_basename}.cram
+    ${tool_path}/samtools-1.9/samtools index ${output_basename}.cram
     rm -rf ../inputs
   >>>
   runtime {
@@ -1183,9 +1187,9 @@ task CramToBam {
     set -e
     set -o pipefail
 
-    ${tool_path}/samtools view -h -T ${ref_fasta} ${cram_file} |
-    ${tool_path}/samtools view -b -o ${output_basename}.bam -
-    ${tool_path}/samtools index -b ${output_basename}.bam
+    ${tool_path}/samtools-1.9/samtools view -h -T ${ref_fasta} ${cram_file} |
+    ${tool_path}/samtools-1.9/samtools view -b -o ${output_basename}.bam -
+    ${tool_path}/samtools-1.9/samtools index -b ${output_basename}.bam
     mv ${output_basename}.bam.bai ${output_basename}.bai
     rm -rf ../inputs
   >>>
@@ -1280,9 +1284,7 @@ workflow PairedEndSingleSampleWorkflow {
   String gatk_gkl_pairhmm_implementation
   Int gatk_gkl_pairhmm_threads
 
-  String tmp_directory
-
-  String bwa_commandline="bwa mem -K 100000000 -p -v 3 -t $bwa_threads -Y $bash_ref_fasta"
+  String bwa_commandline="bwa/bwa mem -K 100000000 -p -v 3 -t $bwa_threads -Y $bash_ref_fasta"
 
   String recalibrated_bam_basename = base_file_name + ".aligned.duplicates_marked.recalibrated"
 
@@ -1310,7 +1312,7 @@ workflow PairedEndSingleSampleWorkflow {
     Float unmapped_bam_size = size(unmapped_bam, "GB")
     
 	#Change the path below to where your files reside in your shared file system. 
-	String sub_strip_path = "/cluster_share/data/.*/"
+        String sub_strip_path = "/mnt/lustre/genomics/wgs-data/data/.*/"
     String sub_strip_unmapped = unmapped_bam_suffix + "$"
     String sub_sub = sub(sub(unmapped_bam, sub_strip_path, ""), sub_strip_unmapped, "")
 
@@ -1652,7 +1654,6 @@ workflow PairedEndSingleSampleWorkflow {
         gatk_gkl_pairhmm_implementation = gatk_gkl_pairhmm_implementation, 
         gatk_gkl_pairhmm_threads = gatk_gkl_pairhmm_threads,
 	tool_path = tool_path
-        #tmp_directory = tmp_directory
      }
   }
 
