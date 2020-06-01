@@ -158,9 +158,9 @@
   "PairedEndSingleSampleWorkflow.CheckContamination.cpu":1,
   "PairedEndSingleSampleWorkflow.ScatterIntervalList.cpu":1,
   "PairedEndSingleSampleWorkflow.HaplotypeCaller.cpu":1,
-  "PairedEndSingleSampleWorkflow.MergeVCFs.cpu":2,
-  "PairedEndSingleSampleWorkflow.ValidateGVCF.cpu":2,
-  "PairedEndSingleSampleWorkflow.CollectGvcfCallingMetrics.cpu":2,
-  "PairedEndSingleSampleWorkflow.ConvertToCram.cpu":2,
-  "PairedEndSingleSampleWorkflow.CramToBam.cpu":2 
+  "PairedEndSingleSampleWorkflow.MergeVCFs.cpu":1,
+  "PairedEndSingleSampleWorkflow.ValidateGVCF.cpu":1,
+  "PairedEndSingleSampleWorkflow.CollectGvcfCallingMetrics.cpu":1,
+  "PairedEndSingleSampleWorkflow.ConvertToCram.cpu":1,
+  "PairedEndSingleSampleWorkflow.CramToBam.cpu":1 
 }
